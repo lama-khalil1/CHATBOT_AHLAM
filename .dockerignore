@@ -1,0 +1,12 @@
+venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.env
+.git
+.gitignore
+node_modules
+faiss_index*
+chunks.json
+*.ipynb

@@ -1,0 +1,7 @@
+{
+    "embedding_model": "paraphrase-multilingual-MiniLM-L12-v2",
+    "embedding_library": "sentence-transformers",
+    "faiss_index_file": "faiss_index.index",
+    "chunks_file": "chunks.json",
+    "top_k": 7
+}

@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>الشات بوت المخصص لرياض الأطفال</title>
+
+  <style>
+    :root{
+      --bg:#0b0f14; --panel:#0f1621; --border:rgba(255,255,255,.08);
+      --text:rgba(255,255,255,.92); --muted:rgba(255,255,255,.65); --muted2:rgba(255,255,255,.5);
+      --accent:#4f8cff; --accent2:#5eead4;
+      --userBubble:rgba(79,140,255,.20); --botBubble:rgba(255,255,255,.06);
+      --shadow:0 12px 30px rgba(0,0,0,.45); --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,"Noto Sans Arabic","Noto Kufi Arabic",sans-serif;
+      background:radial-gradient(1200px 800px at 30% -10%, rgba(79,140,255,.18), transparent 60%),
+               radial-gradient(1200px 800px at 110% 10%, rgba(94,234,212,.10), transparent 55%),
+               var(--bg);
+      color:var(--text);
+    }
+    .wrap{max-width:980px;margin:0 auto;padding:22px 14px 18px;min-height:100vh;display:flex;flex-direction:column;gap:14px}
+    header{
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      padding:12px 14px;border:1px solid var(--border);
+      background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border-radius:var(--radius);box-shadow:var(--shadow);
+    }
+    .brand{display:flex;align-items:center;gap:10px;min-width:0}
+    .logo{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg, rgba(79,140,255,.9), rgba(94,234,212,.65));box-shadow:0 10px 20px rgba(79,140,255,.18)}
+    .title{display:flex;flex-direction:column;gap:2px;min-width:0}
+    .title b{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .title span{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+    .chip{
+      display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--border);
+      background:rgba(255,255,255,.03);border-radius:999px;color:var(--muted);font-size:12px
+    }
+    .chip input{
+      width:220px;max-width:52vw;background:transparent;border:none;outline:none;color:var(--text);
+      font-size:12px;direction:ltr
+    }
+    .chip input::placeholder{color:rgba(255,255,255,.35)}
+    .btn{
+      border:1px solid var(--border);background:rgba(255,255,255,.05);color:var(--text);
+      border-radius:12px;padding:9px 12px;cursor:pointer;font-weight:700;font-size:13px;
+      transition:transform .06s ease, background .2s ease;user-select:none
+    }
+    .btn:hover{background:rgba(255,255,255,.08)}
+    .btn:active{transform:translateY(1px)}
+    .btn.primary{border-color:rgba(79,140,255,.35);background:rgba(79,140,255,.18)}
+    .btn.primary:hover{background:rgba(79,140,255,.24)}
+
+    .chat{
+      flex:1 1 auto;display:flex;flex-direction:column;gap:12px;padding:16px 14px;
+      border:1px solid var(--border);background:rgba(255,255,255,.02);
+      border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden
+    }
+    .messages{flex:1 1 auto;overflow:auto;padding:4px 2px 10px;display:flex;flex-direction:column;gap:12px;scroll-behavior:smooth}
+    .messages::-webkit-scrollbar{width:10px}
+    .messages::-webkit-scrollbar-thumb{background:rgba(255,255,255,.10);border-radius:999px;border:2px solid transparent;background-clip:padding-box}
+    .messages::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.16)}
+    .msgRow{display:flex;gap:10px;align-items:flex-end}
+    .avatar{
+      width:30px;height:30px;border-radius:10px;border:1px solid var(--border);
+      background:rgba(255,255,255,.04);display:flex;align-items:center;justify-content:center;
+      font-size:13px;color:var(--muted);flex:0 0 auto
+    }
+    .avatar.user{background:rgba(79,140,255,.14);color:rgba(255,255,255,.85);border-color:rgba(79,140,255,.22)}
+    .bubble{
+      max-width:min(760px,92%);border:1px solid var(--border);border-radius:16px;
+      padding:12px 12px;line-height:1.85;background:var(--botBubble);overflow:hidden
+    }
+    .bubble.user{background:var(--userBubble);border-color:rgba(79,140,255,.22)}
+    .metaLine{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;color:var(--muted2);font-size:12px}
+    .bubble pre{margin:0;white-space:pre-wrap;word-wrap:break-word;font-family:inherit;color:var(--text)}
+    .pill{padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);color:var(--muted)}
+    .answerBox{
+      border:1px solid var(--border);background:rgba(0,0,0,.18);border-radius:14px;
+      padding:10px 10px;margin-top:8px
+    }
+    .answerHeader{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+    .answerHeader b{font-size:13px;color:rgba(255,255,255,.86)}
+    .answerActions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-start}
+    .miniBtn{
+      border:1px solid var(--border);background:rgba(255,255,255,.05);color:var(--text);
+      border-radius:10px;padding:6px 10px;font-size:12px;cursor:pointer;user-select:none
+    }
+    .miniBtn:hover{background:rgba(255,255,255,.08)}
+    .scrollText{
+      max-height:330px;overflow:auto;padding:8px 8px;border-radius:12px;
+      background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)
+    }
+    .scrollText::-webkit-scrollbar{width:10px}
+    .scrollText::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:999px;border:2px solid transparent;background-clip:padding-box}
+    details{margin-top:10px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.02);border-radius:14px;overflow:hidden}
+    summary{cursor:pointer;padding:10px 12px;font-weight:800;font-size:13px;color:rgba(255,255,255,.85);list-style:none}
+    summary::-webkit-details-marker{display:none}
+    .detailsBody{padding:10px 12px 12px;border-top:1px solid rgba(255,255,255,.07);color:var(--muted);font-size:13px}
+    .srcItem{border:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.12);border-radius:12px;padding:10px 10px;margin-top:10px}
+    .srcItem b{color:rgba(255,255,255,.85)}
+    .srcItem pre{margin-top:8px;color:rgba(255,255,255,.88);font-size:13px}
+
+    .composer{padding-top:10px;border-top:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;gap:10px}
+    .inputWrap{display:flex;gap:10px;align-items:flex-end}
+    textarea{
+      width:100%;resize:none;min-height:52px;max-height:160px;padding:12px 12px;border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.03);color:var(--text);outline:none;
+      font-size:14px;line-height:1.7
+    }
+    textarea::placeholder{color:rgba(255,255,255,.35)}
+    .hint{display:flex;align-items:center;justify-content:space-between;gap:10px;color:var(--muted2);font-size:12px}
+    .err{
+      border:1px solid rgba(255,92,122,.35);background:rgba(255,92,122,.10);color:rgba(255,255,255,.92);
+      border-radius:14px;padding:10px 12px;font-size:13px;line-height:1.7
+    }
+    .loadingDots{display:inline-flex;gap:4px;align-items:center;margin-inline-start:6px}
+    .dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.55);animation:bounce 1.2s infinite ease-in-out}
+    .dot:nth-child(2){animation-delay:.15s}
+    .dot:nth-child(3){animation-delay:.30s}
+    @keyframes bounce{0%,80%,100%{transform:translateY(0);opacity:.55}40%{transform:translateY(-5px);opacity:1}}
+    @media (max-width:560px){
+      .chip input{width:160px}
+      .answerActions{gap:6px}
+      .scrollText{max-height:280px}
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo"></div>
+        <div class="title">
+          <b>الشات بوت المخصص لرياض الاطفال</b>
+          <span>إجابة مصاغة + نسخ + تكبير + مصادر (اختياري)</span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <!-- <div class="chip" title="اتركيه فاضي عشان يستخدم نفس الدومين. لو شغال لوكال/ملف، اكتبي http://127.0.0.1:8000">
+          <span>Base URL</span>
+          <input id="baseUrl" placeholder="(اختياري) http://127.0.0.1:8000" />
+        </div> -->
+        <button class="btn" onclick="clearChat()">مسح</button>
+        <button class="btn primary" onclick="ask()">إرسال</button>
+      </div>
+    </header>
+
+    <section class="chat">
+      <div class="messages" id="messages">
+        <div class="msgRow bot">
+          <div class="avatar">🤖</div>
+          <div class="bubble">
+            <div class="metaLine">
+              <span>جاهز</span>
+              <span class="pill">/ask</span>
+            </div>
+            <pre>اكتبي سؤالك… وبرجع لك إجابة مصاغة. لو تبين المراجع افتحي (المصادر).</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="composer">
+        <div class="inputWrap">
+          <textarea id="q" placeholder="اكتب سؤالك هنا… (Enter لإرسال، Shift+Enter لسطر جديد)"></textarea>
+          <button class="btn primary" style="white-space:nowrap" onclick="ask()">إرسال</button>
+        </div>
+
+        <div class="hint">
+          <span></span>
+          <span class="pill" id="statusPill">Idle</span>
+        </div>
+
+        <div id="errorBox" style="display:none" class="err"></div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const messagesEl = document.getElementById("messages");
+    const qEl = document.getElementById("q");
+    const baseUrlEl = document.getElementById("baseUrl");
+    const statusPill = document.getElementById("statusPill");
+    const errorBox = document.getElementById("errorBox");
+
+    const setStatus = (t)=> statusPill.textContent = t;
+    const showError = (m)=> { errorBox.style.display="block"; errorBox.textContent="❌ "+m; };
+    const clearError = ()=> { errorBox.style.display="none"; errorBox.textContent=""; };
+    const scrollToBottom = ()=> { messagesEl.scrollTop = messagesEl.scrollHeight; };
+
+    const nowTime = ()=>{
+      const d=new Date();
+      return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+    };
+
+    const escapeHtml = (s)=> (s||"").replace(/[&<>"']/g, (m)=>({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    }[m]));
+
+    function addUserMessage(text){
+      const row=document.createElement("div");
+      row.className="msgRow user";
+      row.innerHTML=`
+        <div class="avatar user">👤</div>
+        <div class="bubble user">
+          <div class="metaLine"><span>أنتِ</span><span>${nowTime()}</span></div>
+          <pre>${escapeHtml(text)}</pre>
+        </div>
+      `;
+      messagesEl.appendChild(row);
+      scrollToBottom();
+    }
+
+    function addBotLoading(){
+      const row=document.createElement("div");
+      row.className="msgRow bot";
+      row.dataset.loading="1";
+      row.innerHTML=`
+        <div class="avatar">🤖</div>
+        <div class="bubble">
+          <div class="metaLine"><span>جاري الإجابة</span><span>${nowTime()}</span></div>
+          <pre>لحظة… <span class="loadingDots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span></pre>
+        </div>
+      `;
+      messagesEl.appendChild(row);
+      scrollToBottom();
+      return row;
+    }
+
+    function attachRowButtons(row, final_answer, answer_text){
+      row.querySelectorAll("[data-copy]").forEach(btn=>{
+        btn.addEventListener("click", async ()=>{
+          const what=btn.getAttribute("data-copy");
+          const text = what==="final" ? (final_answer||"") : (answer_text||"");
+          try{
+            await navigator.clipboard.writeText(text);
+            btn.textContent="✅ تم النسخ";
+            setTimeout(()=> btn.textContent=(what==="final"?"نسخ الإجابة":"نسخ الـ Chunks"), 900);
+          }catch{
+            btn.textContent="❌ فشل النسخ";
+            setTimeout(()=> btn.textContent=(what==="final"?"نسخ الإجابة":"نسخ الـ Chunks"), 900);
+          }
+        });
+      });
+
+      row.querySelectorAll("[data-toggle]").forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          const which=btn.getAttribute("data-toggle");
+          const box=row.querySelector(`[data-box="${which}"]`);
+          if(!box) return;
+          const big=box.dataset.big==="1";
+          box.style.maxHeight = big ? "330px" : "720px";
+          box.dataset.big = big ? "0" : "1";
+        });
+      });
+    }
+
+    function replaceLoadingWithAnswer(loadingRow, payload){
+  const final_answer = payload.final_answer || "";
+  const sources      = Array.isArray(payload.sources) ? payload.sources : [];
+
+  const safeFinal  = escapeHtml(final_answer || "—");
+
+  const sourcesHtml = sources.map((s,i)=>{
+    const src = escapeHtml((s.source||"").toString());
+    const pg  = escapeHtml((s.page||"").toString());
+    const txt = escapeHtml((s.text||"").toString());
+    const head = (src||pg) 
+      ? `<b>${src}${pg?` — ص ${pg}`:""}</b>` 
+      : `<b>مصدر ${i+1}</b>`;
+    return `
+      <div class="srcItem">
+        <div>${head}</div>
+        <pre>${txt}</pre>
+      </div>
+    `;
+  }).join("");
+
+  const row=document.createElement("div");
+  row.className="msgRow bot";
+  row.innerHTML=`
+    <div class="avatar">🤖</div>
+    <div class="bubble">
+      <div class="metaLine">
+        <span>الرد</span>
+        <span>${nowTime()}</span>
+      </div>
+
+      <div class="answerBox">
+        <div class="answerHeader">
+          <b>الإجابة المصاغة</b>
+          <div class="answerActions">
+            <button class="miniBtn" data-copy="final">نسخ الإجابة</button>
+            <button class="miniBtn" data-toggle="final">تكبير/تصغير</button>
+          </div>
+        </div>
+        <div class="scrollText" data-box="final">
+          <pre>${safeFinal}</pre>
+        </div>
+      </div>
+
+      <details>
+        <summary>المصادر</summary>
+        <div class="detailsBody">
+          ${sourcesHtml || "<div class='pill'>لا توجد مصادر</div>"}
+        </div>
+      </details>
+
+    </div>
+  `;
+
+  loadingRow.replaceWith(row);
+
+  row.querySelectorAll("[data-copy]").forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      try{
+        await navigator.clipboard.writeText(final_answer);
+        btn.textContent="✅ تم النسخ";
+        setTimeout(()=> btn.textContent="نسخ الإجابة", 900);
+      }catch{
+        btn.textContent="❌ فشل النسخ";
+        setTimeout(()=> btn.textContent="نسخ الإجابة", 900);
+      }
+    });
+  });
+
+  row.querySelectorAll("[data-toggle]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const box=row.querySelector(`[data-box="final"]`);
+      const big=box.dataset.big==="1";
+      box.style.maxHeight = big ? "330px" : "720px";
+      box.dataset.big = big ? "0" : "1";
+    });
+  });
+
+  scrollToBottom();
+}
+
+
+   function getApiUrl(){
+  const base = window.location.origin; // ياخذ دومين ngrok تلقائي
+  return `${base}/ask`;
+}
+
+
+
+    async function ask(){
+      const question=(qEl.value||"").trim();
+      if(!question) return;
+
+      clearError();
+      addUserMessage(question);
+      qEl.value="";
+      autoResize();
+
+      setStatus("Sending…");
+      const loadingRow=addBotLoading();
+
+      try{
+        const res=await fetch(getApiUrl(),{
+          method:"POST",
+          headers:{ "Content-Type":"application/json" },
+          body:JSON.stringify({ question })
+        });
+
+        if(!res.ok){
+          const txt=await res.text().catch(()=> "");
+          throw new Error(`خطأ ${res.status}: ${txt.slice(0,350)}`);
+        }
+
+        const data=await res.json();
+        setStatus("Done");
+        replaceLoadingWithAnswer(loadingRow, data);
+      }catch(err){
+        setStatus("Error");
+        loadingRow.remove();
+        showError(err.message || "صار خطأ غير معروف");
+      }
+    }
+
+    function clearChat(){
+      messagesEl.innerHTML=`
+        <div class="msgRow bot">
+          <div class="avatar">🤖</div>
+          <div class="bubble">
+            <div class="metaLine"><span>جاهز</span><span class="pill">/ask</span></div>
+            <pre>اكتبي سؤالك… وبرجع لك إجابة مصاغة. لو تبين المراجع افتحي (المصادر).</pre>
+          </div>
+        </div>
+      `;
+      clearError();
+      setStatus("Idle");
+      scrollToBottom();
+    }
+
+    qEl.addEventListener("keydown",(e)=>{
+      if(e.key==="Enter" && !e.shiftKey){
+        e.preventDefault();
+        ask();
+      }
+    });
+
+    function autoResize(){
+      qEl.style.height="auto";
+      qEl.style.height=Math.min(qEl.scrollHeight,160)+"px";
+    }
+    qEl.addEventListener("input", autoResize);
+    autoResize();
+  </script>
+</body>
+</html>
