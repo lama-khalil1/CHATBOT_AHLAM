@@ -26,7 +26,8 @@ with open(config["chunks_file"], "r", encoding="utf-8") as f:
 index = faiss.read_index(config["faiss_index_file"])
 
 # ---------- تحميل embedder (من مجلد محلي) ----------
-embedder = SentenceTransformer("models/paraphrase-multilingual-MiniLM-L12-v2")
+#embedder = SentenceTransformer("models/paraphrase-multilingual-MiniLM-L12-v2")
+embedder = SentenceTransformer("sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
 
 # ---------- OpenAI Client ----------
 load_dotenv()
