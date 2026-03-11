@@ -158,7 +158,7 @@ def ask(q: Question):
             messages=[
                 {"role": "user", "content": prompt}
             ],
-            max_tokens=3000
+           max_completion_tokens=3000
         )
 
         final_answer = resp.choices[0].message.content or ""
