@@ -34,10 +34,9 @@ embedder = SentenceTransformer("sentence-transformers/paraphrase-multilingual-Mi
 
 # ---------- OpenAI Client ----------
 load_dotenv()
-
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# ✅ تشخيص مهم: لازم يتطابق عدد الـ vectors مع عدد الـ chunks
+# ---------- تشخيص ----------
 print("BASE_DIR:", BASE_DIR)
 print("chunks count:", len(chunks))
 print("faiss ntotal:", getattr(index, "ntotal", "unknown"))
@@ -83,7 +82,12 @@ def ask(q: Question):
 
     top_k = min(TOP_K, len(chunks))
     if top_k <= 0:
-        return {"question": q.question, "final_answer": "", "answer_text": "ما فيه chunks.", "sources": []}
+        return {
+            "question": q.question,
+            "final_answer": "",
+            "answer_text": "ما فيه chunks.",
+            "sources": []
+        }
 
     D, I = index.search(query_vec, top_k)
 
@@ -149,13 +153,15 @@ def ask(q: Question):
 
     final_answer = ""
     try:
-        resp = client.responses.create(
+        resp = client.chat.completions.create(
             model="gpt-5-mini",
-            input=prompt,
-            max_output_tokens=3000,
+            messages=[
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=3000
         )
 
-        final_answer = resp.output_text
+        final_answer = resp.choices[0].message.content or ""
     except Exception as e:
         final_answer = f"LLM error: {str(e)}"
 
