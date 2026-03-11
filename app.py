@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import os
+from pathlib import Path
 from openai import OpenAI
 from dotenv import load_dotenv
 
@@ -12,28 +13,32 @@ import faiss
 from sentence_transformers import SentenceTransformer
 
 
+# ---------- تحديد مسار المشروع ----------
+BASE_DIR = Path(__file__).resolve().parent
+
 # ---------- تحميل config ----------
-with open("config.json", "r", encoding="utf-8") as f:
+with open(BASE_DIR / "config.json", "r", encoding="utf-8") as f:
     config = json.load(f)
 
 TOP_K = int(config.get("top_k", 7))
 
 # ---------- تحميل chunks ----------
-with open(config["chunks_file"], "r", encoding="utf-8") as f:
+with open(BASE_DIR / config["chunks_file"], "r", encoding="utf-8") as f:
     chunks = json.load(f)
 
 # ---------- تحميل FAISS index ----------
-index = faiss.read_index(config["faiss_index_file"])
+index = faiss.read_index(str(BASE_DIR / config["faiss_index_file"]))
 
-# ---------- تحميل embedder (من مجلد محلي) ----------
-#embedder = SentenceTransformer("models/paraphrase-multilingual-MiniLM-L12-v2")
+# ---------- تحميل embedder ----------
 embedder = SentenceTransformer("sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
 
 # ---------- OpenAI Client ----------
 load_dotenv()
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
 # ✅ تشخيص مهم: لازم يتطابق عدد الـ vectors مع عدد الـ chunks
+print("BASE_DIR:", BASE_DIR)
 print("chunks count:", len(chunks))
 print("faiss ntotal:", getattr(index, "ntotal", "unknown"))
 print("faiss dim:", getattr(index, "d", "unknown"))
@@ -50,7 +55,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/ui", StaticFiles(directory="ui", html=True), name="ui")
+app.mount("/ui", StaticFiles(directory=str(BASE_DIR / "ui"), html=True), name="ui")
 
 
 class Question(BaseModel):
@@ -70,6 +75,7 @@ def _normalize_chunk(item):
             "page": item.get("page", ""),
         }
     return {"text": str(item), "source": "", "page": ""}
+
 
 @app.post("/ask")
 def ask(q: Question):
@@ -110,7 +116,7 @@ def ask(q: Question):
         ]
     )
 
-    # ---------- صياغة جواب من OpenAI (نفس النوتبوك) ----------
+    # ---------- صياغة جواب من OpenAI ----------
     contexts = [h.get("text", "").strip() for h in hits if h.get("text", "").strip()]
     context_text = "\n\n".join(contexts)
 
@@ -146,9 +152,9 @@ def ask(q: Question):
         resp = client.responses.create(
             model="gpt-5-mini",
             input=prompt,
-            max_output_tokens=3000,  
+            max_output_tokens=3000,
         )
-        
+
         final_answer = resp.output_text
     except Exception as e:
         final_answer = f"LLM error: {str(e)}"
@@ -159,4 +165,3 @@ def ask(q: Question):
         "answer_text": answer_text,
         "sources": hits,
     }
-
